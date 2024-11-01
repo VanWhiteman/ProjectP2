@@ -1,0 +1,175 @@
+---
+title: "Project"
+author: "Van Whiteman"
+date: "2024-10-21"
+output:
+  pdf_document: default
+bibliography: refer.bib
+params: data = project
+---
+
+
+
+```{r setup, echo=FALSE,message=FALSE,include=FALSE}
+#install.packages("kableExtra")
+#install.packages("bookdown")
+#install.packages("tidyverse")
+#install.packages("ggplot2")
+library(tidyverse)
+library(ggplot2)
+library(kableExtra)
+library(bookdown)
+library(MASS)
+library(knitr)
+
+project <- read.csv("project.csv")
+
+```
+
+```{r linearmodel,echo=FALSE}
+linear_hw <- function(data,type) {
+  model <- lm(weight~height,data=data)
+  model_linear <- summary(model)
+  model_linear
+  p_value_linear <- model_linear$coefficients[2,4]
+  
+   if (type==1) {
+    if (p_value_linear < 0.05) {
+    paste0("exists, the relationship is positive with a slope of: ", (model_linear$coefficients)[2,1] )
+  } else {
+    paste("does not exist.")
+  }
+  } else {
+  if (p_value_linear < 0.05) {
+    paste0("p-value of the regression is equal to: ",p_value_linear, ", which is less than 0.05. Hence reject the null hypothesis in favour of the alternative hypothesis at the 5% significance level. Hence, a linear relationship between weight and height exists. The relationship is positive with a slope of: ",(model_linear$coefficients)[2,1])
+  } else {
+    paste0("p-value of the regression is equal to: ",p_value_linear, ". Hence do not reject the null hypothesis. Hence, a linear relationship between weight and height does not exist.")
+  }
+}
+}
+
+```
+
+```{r meanheight,echo=FALSE}
+mean_height <- function(data,type) {
+  ttest <- t.test(weight~gender,data=data,var.equal=TRUE)
+  p_value_means <- ttest$p.value
+  
+   if (type==1) {
+    if (p_value_means < 0.05) {
+    paste("not equal. The mean height of males is " ,round(mean((filter(project,gender=="Male"))$height),2),"cm and the mean height of females is ",round(mean((filter(project,gender=="Female"))$height),2),"cm.")
+  } else {
+    paste("no association between gender and physical activity.")
+  }
+  } else {
+  if (p_value_means < 0.05) {
+    paste0("p-value is equal to: ", p_value_means,". p-value is less than 0.05, hence reject the null hypothesis in favour of the alternative hypothesis at the 5% significance level. The mean height of males and females are not equal. The mean height of males is ", round(mean((filter(project,gender=="Male"))$height),2),"cm and the mean height of females is ", round(mean((filter(project,gender=="Female"))$height),2), "cm.")
+  } else {
+    paste0("p-value is equal to: ",p_value_means, ". Hence do not reject the null hypothesis. In the provided data, the mean height of males and females are equal: ",mean(project$height),"cm.")
+  }
+  }
+}
+```
+
+
+
+```{r genderphys,echo=FALSE}
+gender_vs_phys <- function(data,type) {
+  cont_tab <- table(data$phys,data$gender)
+  chisq <- chisq.test(cont_tab)
+  p_value_assoc <- chisq$p.value
+  
+  if (type==1) {
+    if (p_value_assoc < 0.05) {
+    paste("association between gender and physical activity.")
+  } else {
+    paste("no association between gender and physical activity.")
+  }
+  } else {
+  
+  if (p_value_assoc < 0.05) {
+    paste("the p-value is: ",p_value_assoc,". p-value is less than 0.05, hence reject the null hypothesis in favour of the alternative hypothesis at 5% signifcance level. There is association between gender and physical activity.",collapse ="\n")
+  } else {
+    paste("the p-value is: ",p_value_assoc,". p-value is not less than 0.05, hence do not reject the null hypothesis at the 5% signficance level. There is no association between gender and physical activity.",collpase="\n")
+  }
+}
+}
+
+
+```
+
+# PROJECT
+
+Will be testing 3 different questions:
+
+1. Is there a linear relationship between height and weight?
+1. Is the mean height of male and female the same?
+1. Is there any association between gender and the amount of physical activity?
+
+The data set used for the statistical analysis was project.csv which contains 1000 observations on:
+
+- Gender
+- Height(in cm)
+- Weight (in kg)
+- Physical activity (None, Moderate, Intense)
+
+To test the relationship between height and weight, we used simple linear regression to find that a linear relationship between weight and height `r linear_hw(project,1)`
+
+The mean heights of female and males were shown, through a t test the mean height of males and females are `r mean_height(project,1)`
+
+Through a Chi squared test, it was deduced that there is `r gender_vs_phys(project,1)`
+
+## Is there a linear relationship between height and weight?
+
+We wish to determine whether a linear relationship exists between the height of a person (in cm) and their weight (kg). This is of interest to many fields of research, such as the health sector, as someone that is very tall may be a lot heavier than someone who is short, but that doesn’t necessarily mean they are more “overweight” than the shorter person.
+
+The dataset contains a large pool of data with varying genders, ages and physicality to create an unbiased test. The method to test the linear relationship between the two will be simple linear regression, as it tests if one variable has a linear relationship with another using the lm() function. Our linear model will be:
+$$Weight = \beta_0 + \beta*Height$$
+where $\beta$ is the slope of the line of weight regressed on height and $\beta_0$ is the intercept of the line.\newline
+\newline
+we will have:\newline
+Null hypothesis: $H_0: \beta=0$\newline
+Alternative Hypothesis $H_1: \beta \neq 0$\newline
+
+using summary() of the created linear model, we get the following results:
+
+`r linear_hw(project,2)`
+\newline
+
+## Is the mean height of male and female the same?
+
+Human height, throughout the history of humanity has been correlated with many different variables, including economic status, health, living standards and many other factors. (@bodyheight,@bodyheight1) In this study we will investigate if there is a difference in the average height of males in comparison to the average height of females. This study could be of interest to sports analysts, for example does the mean height of athletes affect performance, hence can this be seen in each gender’s ability in a particular sport.
+
+The data set contains `r nrow(filter(project,gender=="Male"))` males and `r nrow(filter(project,gender=="Female"))` females with the average male height being `r round(mean((filter(project,gender=="Male"))$height),2)`cm and average female height `r round(mean((filter(project,gender=="Female"))$height),2)`cm.
+
+`r kbl((project %>% group_by(gender) %>% summarise(frequency = n(),mean=mean(height))),booktabs=T)`
+
+Assuming equal variances of male and female, we can use a t test to test if the means of both genders are the same: t.test(height~gender,data=project,var.equal=TRUE)
+
+With:\newline
+Null hypothesis $H_0: \mu_f=\mu_m$\newline
+Alternative Hypothesis: $H_0: \mu_f \neq \mu_m$\newline
+where $\mu_f$ is average height of females and $\mu_m$ is average height of males
+
+`r mean_height(project,2)`
+\newline
+
+## Is there any association between gender and the amount of physical activity?
+
+Many differences between males and females are often speculated to gender stereotypes, one of those speculations is whether males or females are more physically active. Previous studies have shown that males are more physically active than females starting from a young age and that trend continues through their lives (@TheLancetPublicHealth2019). This information is necessary for measuring the gender gaps in professional sports.
+
+The data set has three levels of physical activity assigned: None, Moderate and Intense. We can hence segregate the and compare the frequency of men and women over the three levels:
+
+`r kbl(table(project$phys,project$gender),booktabs=T)`
+
+We will use a Chi squared test to test the association between physicality and gender using chisq.test(): cont_tab <- table(data\$phys,data\$gender) \newline
+chisq.test(cont_tab)
+
+With:
+Null Hypothesis: $H_0$: no association between gender and physicality \newline
+Alternative Hypothesis: $H_1$: there is association between gender and physicality
+
+`r gender_vs_phys(project,2)`
+
+# References
+
